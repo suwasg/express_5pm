@@ -122,7 +122,7 @@ exports.deleteProduct=async(req,res)=>{
       if (err instanceof mongoose.Error.CastError){
        return res.status(400).json({error:"Invalid ObjectID", success:false, message:err.message})
       }
-      res.status(500).json({error:"Eroor on deleting product api.", success:false, details:err})
+      res.status(500).json({error:"Error on deleting product api.", success:false, details:err})
     }
   }
     
