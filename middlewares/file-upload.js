@@ -22,7 +22,7 @@ const filename = (req, file, cb) => {
 };
 
 const imageFilter = (req, file, cb) => {
-    const allowedExtensions = /\.(jpg|png|jpeg|svg|jfif|gif)$/i; // List of allowed extensions
+    const allowedExtensions = /\.(jpg|png|jpeg|svg|jfif|gif|webp)$/i; // List of allowed extensions
     const isValidExtension = allowedExtensions.test(file.originalname);
     
     if (isValidExtension) {

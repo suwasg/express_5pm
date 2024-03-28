@@ -1,5 +1,6 @@
 const express = require('express')
 const { postCategory, getCategories, updateCategory, deletCategory, categoryDetails } = require('../controllers/categoryController')
+const { categoryValidation, validation } = require('../validation/validator')
 const router = express.Router()
 
 // http methods:
@@ -10,7 +11,7 @@ const router = express.Router()
 
 // http status codes.
 
-router.post('/postcategory', postCategory)
+router.post('/postcategory',validation,categoryValidation, postCategory)
 router.get('/categorylist', getCategories)
 router.get('/categorydetails/:id', categoryDetails)
 router.put('/updatecategory/:id', updateCategory)
