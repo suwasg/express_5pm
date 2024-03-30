@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema({
         min:8,
         max:50
     },
+    phone:{
+        type:String, 
+        required:true
+    },
     role:{
         type:Number,
         enum:[0, 1],
@@ -35,4 +39,4 @@ const userSchema = new mongoose.Schema({
     timestamps:true
 })
 
-exports.module=mongoose.model("User", userSchema)
+module.exports=mongoose.model("User", userSchema)
