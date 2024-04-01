@@ -14,6 +14,7 @@ require('./db/connection')
 const categoryRoute = require('./routes/categoryRoute')
 const productRoute = require('./routes/productRoute')
 const userRoute = require('./routes/userRoute')
+const orderRoute = require('./routes/orderRoute')
 
 // middle-wares
 app.use(express.json())  //to parse incoming request bodies with JSON payloads
@@ -25,6 +26,7 @@ app.use(morgan('dev'))
 app.use('/api', categoryRoute)
 app.use('/api', productRoute)
 app.use('/api', userRoute)
+app.use('/api', orderRoute)
 
 const port= process.env.PORT ||  8000
 app.listen(port, ()=>{

@@ -242,9 +242,105 @@ exports.userDetails=async(req,res)=>{
             message:err.message})
       }
       res.status(500).json({
-        error:"Eroor on getting user details api.", 
+        error:"Error on getting user details api.", 
         success:false, 
         details:err})
     }
   }
+
+
+exports.forgetPassword=async(req,res)=>{
+    try{
+        const {email}=req.body // email:req.body.email
+        const user = await User.findOne({email:email})
+
+        // validate user
+        if(!user){
+            return res.status(404).json({success:false, message:"User not found in the system."})
+        }
+
+         // generate token
+         const token= jwt.sign({email}, process.env.JWT_SECRET, {expiresIn:"1d"})
+        
+         // create and save token to db
+         const tokenDoc= new Token({
+             token,
+             user_id:user._id,
+         })
+         await tokenDoc.save()
+ 
+         // send the reset email
+         sendEmail({
+             from:`noreply@ecommerce.com`,
+             to:user.email,
+             subject:'Password Reset Link',
+             text:`Greetings!! \n\n Please reset the password clicking the link below: \n\n http:\/\/${req.headers.host}\/api\/resetpassword\/${tokenDoc.token}`
+             // http://localhost:5000/api/resetpassword/9abcd29722233
+         })
+ 
+         // return the success response
+         return res.status(201).json({success:true, message:"Password reset link sent successfully."})
+
+    }
+    catch(err){
+        console.log(err)
+        if (err instanceof mongoose.Error.CastError){
+          res.status(400).json({
+              error:"Invalid ObjectID", 
+              success:false, 
+              message:err.message})
+        }
+        res.status(500).json({
+          error:"Error on forget password api.", 
+          success:false, 
+          details:err})
+      }
+}
+
+exports.resetPassword=async(req,res)=>{
+    try{
+          // get token from params
+          const tokenValue = req.params.token 
+          // validate tokenValue
+          if(!tokenValue){
+              return res.status(400).json({success:false, message:"Token required"})
+          }
   
+          // find the token on the db.
+          const token = await Token.findOne({token:tokenValue})
+          // validate input token
+          if(!token){
+              return res.status(400).json({success:false, message:"Invalid token Or Token may be expired."})
+          }
+          // find the user for given token
+          const user = await User.findOne({
+              _id:token.user_id
+          })
+  
+          // validate user
+          if(!user){
+              return res.status(400).json({success:false, message:"Unable to find tthe user for this token."})
+          }
+
+        //   user.isverified=true
+        user.password=await hashPassword(req.body.password)
+
+        await user.save()
+
+        return res.status(200).json({success:true, message:"Password reset successfully."})
+
+    }
+    catch(err){
+        console.log(err)
+        if (err instanceof mongoose.Error.CastError){
+          res.status(400).json({
+              error:"Invalid ObjectID", 
+              success:false, 
+              message:err.message})
+        }
+        res.status(500).json({
+          error:"Error on reset password api.", 
+          success:false, 
+          details:err})
+      }
+}

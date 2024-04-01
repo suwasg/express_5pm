@@ -1,6 +1,7 @@
 const express = require('express')
 const { postCategory, getCategories, updateCategory, deletCategory, categoryDetails } = require('../controllers/categoryController')
 const { categoryValidation, validation } = require('../validation/validator')
+const { requireSignin, requireAdmin } = require('../middlewares/authMiddleware')
 const router = express.Router()
 
 // http methods:
@@ -11,11 +12,11 @@ const router = express.Router()
 
 // http status codes.
 
-router.post('/postcategory',validation,categoryValidation, postCategory)
+router.post('/postcategory',validation,categoryValidation,requireSignin,requireAdmin, postCategory)
 router.get('/categorylist', getCategories)
 router.get('/categorydetails/:id', categoryDetails)
-router.put('/updatecategory/:id', updateCategory)
-router.delete('/deletecategory/:id', deletCategory)
+router.put('/updatecategory/:id',requireSignin,requireAdmin, updateCategory)
+router.delete('/deletecategory/:id',requireSignin, requireAdmin, deletCategory)
 
 
 module.exports= router
