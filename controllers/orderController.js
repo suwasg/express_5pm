@@ -5,7 +5,7 @@ exports.postOrder=async(req,res)=>{
     try{
 
         // At first, post to the OrderItemModel and return the stored Ids of OrderItems.
-        const orderItemIds=await Promise.all(req.body.orderItems.map(async orderItemData=>{
+        const orderItemIds=await Promise.all(req.body.order_items.map(async orderItemData=>{
             let newOrderItem=new OrderItem({
                 product:orderItemData.product,
                 quantity:orderItemData.quantity
@@ -78,7 +78,8 @@ exports.orderList=async(req, res)=>{
         return res.status(200).json({
             message:"Orders List", 
             success:true, 
-            orders})
+            orders, 
+        order_count:orders.length})
         // res.send(orders)
 
     }
@@ -145,3 +146,107 @@ exports.orderDetails=async(req,res)=>{
         details:err})
     }
   }
+
+exports.userOrdersList=async(req,res)=>{
+    try{
+        // get userId
+        userId=req.params.id
+        // find the orders list associated with the specified userId
+        const orderList=await Order.find({user:req.params.id})
+        .populate({
+            path:'order_items',
+            populate:{
+                path:'product',
+                populate:'category'
+            }
+        })
+
+        // check if orderList found
+        if(!orderList || orderList.length==0){
+            return res.status(404).json({succes:false, message:"No orders for this user."})
+        }
+
+        // send the order list in the success response
+        return res.status(200).json({succes:true, message:"user order list", orderList})
+
+    }
+    catch(err){
+        console.log(err)
+        if (err instanceof mongoose.Error.CastError){
+          res.status(400).json({
+              error:"Invalid ObjectID", 
+              success:false, 
+              message:err.message})
+        }
+        res.status(500).json({
+          error:"Eroor on getting user order list api.", 
+          success:false, 
+          details:err})
+      }
+}
+
+
+exports.updateStatus=async(req,res)=>{
+    try{
+        // find the order by id and update status
+        const order = await Order.findByIdAndUpdate(req.params.id, {
+            status:req.body.status
+        },{
+            new:true
+        })
+
+        // check if the order found and updated successfully
+        if(!order){
+            return res.status(404).json({succes:false, message:"Order Not found."})
+        }
+        // return the success response
+        return res.status(200).json({succes:true, message:"Order status updated successfully.", order})
+    }
+    catch(err){
+        console.log(err)
+        if (err instanceof mongoose.Error.CastError){
+          res.status(400).json({
+              error:"Invalid ObjectID", 
+              success:false, 
+              message:err.message})
+        }
+        res.status(500).json({
+          error:"Error on updating order status api.", 
+          success:false, 
+          details:err})
+      }
+}
+
+exports.orderCount=async(req,res)=>{
+    const totalOrders=(await Order.find()).length
+    // const totalOrders2= await Order.find().countDocuments()
+
+    return res.status(200).json({success:true, message:"total order count", totalOrders})
+
+}
+
+exports.deleteOrder= async(req,res)=>{
+    try{
+        const id = req.params.id 
+        const order = await Order.findByIdAndDelete(id)
+        if(!order){
+            return res.status(404).json({
+                message:"Order Not Found", 
+                succes:false})
+        }
+        return res.status(200).json({
+            message:"Order deleted."})
+
+    }
+    catch(error){
+        console.log(error)
+        // console.error(error)
+        if(error instanceof mongoose.Error.CastError){
+            return res.status.json({
+                message:"Cast Error. Invalid ObjectId"})
+        }
+        return res.status(400).json({
+            success:false, message:"Error on deleting the order", 
+            details:error})
+    }
+}
