@@ -5,10 +5,10 @@ const mongoose = require("mongoose")
 const {hashPassword, comparePassword} = require('../helper/authHelper')
 const sendEmail= require('../utils/set-email')
 const crypto= require('crypto')
-
 exports.signup= async(req,res)=>{
     try{
         const{name, email, password,phone}=req.body
+        console.log(req.body)
         // req.body.email=email
         // check if email already exists or not.
         const existEmail= await User.findOne({email})
@@ -43,13 +43,22 @@ exports.signup= async(req,res)=>{
         })
         await tokenDoc.save()
 
+        // frontend link
+         const url=process.env.FRONTEND_URL + '\/email\/confirmation/'+tokenDoc.token
+        //  http://localhost:5173/email/confirmation/qoyajdj297627943kmfdf
+
         // send the confirmation email
         sendEmail({
             from:`noreply@ecommerce.com`,
             to:user.email,
             subject:'Email Verification Link',
-            text:`Greetings!! \n\n Please verify your email by clicking the link below: \n\n http:\/\/${req.headers.host}\/api\/confirmation\/${tokenDoc.token}`
+            text:`Greetings!! \n\n Please verify your email by clicking the link below: \n\n http:\/\/${req.headers.host}\/api\/confirmation\/${tokenDoc.token}`,
             // http://localhost:5000/api/confirmation/9abcd29722233
+            html:`<h1>
+                Verify your email:
+                </h1>
+            <a href='${url}'> Click to verify</a>
+              `
         })
 
         // return the success response
@@ -154,6 +163,8 @@ exports.signin=async(req,res)=>{
 
         // generate token
         const token= jwt.sign({_id:user._id, role:user.role}, process.env.JWT_SECRET)
+
+        res.cookie('authToken')
 
         // respond with success msg
         return res.status(200).json({success:true, message:"Login Successfull", 
@@ -268,14 +279,23 @@ exports.forgetPassword=async(req,res)=>{
              user_id:user._id,
          })
          await tokenDoc.save()
+
+        //  frontend link for reset password
+         const url=process.env.FRONTEND_URL + '\/reset\/password/'+tokenDoc.token
+
  
          // send the reset email
          sendEmail({
              from:`noreply@ecommerce.com`,
              to:user.email,
              subject:'Password Reset Link',
-             text:`Greetings!! \n\n Please reset the password clicking the link below: \n\n http:\/\/${req.headers.host}\/api\/resetpassword\/${tokenDoc.token}`
+             text:`Greetings!! \n\n Please reset the password clicking the link below: \n\n http:\/\/${req.headers.host}\/api\/resetpassword\/${tokenDoc.token}`,
              // http://localhost:5000/api/resetpassword/9abcd29722233
+             html:`<h1>
+             Reset your password:
+             </h1>
+         <a href='${url}'> Click to reset passowrd</a>
+           `
          })
  
          // return the success response
@@ -343,4 +363,9 @@ exports.resetPassword=async(req,res)=>{
           success:false, 
           details:err})
       }
+}
+
+exports.signout=async(req,res)=>{
+    res.clearCookie('authToken')
+    res.status(200).json({message:"Signout Successfully"})
 }

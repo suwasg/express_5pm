@@ -10,11 +10,11 @@ exports.postProduct=async(req,res)=>{
         product_description:req.body.product_description,
         product_rating:req.body.product_rating,
         category:req.body.category,
-        // product_images:req.files.map(file=>file.path),
-        product_images:req.files.map(file => {
-                const baseUrl = 'http://localhost:5000'; // Replace this with your server's base URL
-                return baseUrl + '/' + file.path.replace(/\\/g, '/'); // Convert Windows-style paths to URL paths
-            }),
+        product_images:req.files.map(file=>file.path),// most preferrable
+        // product_images:req.files.map(file => {
+        //         const baseUrl = 'http://localhost:5000'; // Replace this with your server's base URL
+        //         return baseUrl + '/' + file.path.replace(/\\/g, '/'); // Convert Windows-style paths to URL paths
+        //     }),
         count_in_stock:req.body.count_in_stock
     })
     product = await product.save()

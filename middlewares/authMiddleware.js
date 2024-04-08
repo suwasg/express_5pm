@@ -14,6 +14,7 @@ exports.requireSignin=(req,res, next)=>{
     }
     catch(error){
         console.log("Unauthorized.")
+        return res.status(401).json({message:"unauthorized", success:false})
     }
 }
 
