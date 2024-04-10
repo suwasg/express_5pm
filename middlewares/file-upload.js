@@ -41,7 +41,7 @@ const upload = multer({
     storage: storage,
     fileFilter: imageFilter,
     limits: {
-        fileSize: 3000000 // 3mb
+        fileSize: 5000000 // 3mb
     },
     multiple:true
 });

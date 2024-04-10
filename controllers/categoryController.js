@@ -1,10 +1,12 @@
 const  mongoose  = require("mongoose")
 const Category = require("../models/categoryModel")
+const Product = require("../models/productModel")
 
 exports.postCategory = async(req,res)=>{
     let category = new Category({
         category_name:req.body.category_name
     })
+    console.log(req.body.category_name)
 
     // check for unique
     Category.findOne({
@@ -18,6 +20,7 @@ exports.postCategory = async(req,res)=>{
         else{
             category = await category.save()
             if (!category){
+                
                 return res.status(400).json({
                     error:"Something went wrong."})
             }
@@ -126,6 +129,14 @@ exports.updateCategory=async(req,res)=>{
     }
 }
 
+exports.categoryCount=async(req,res)=>{
+    const total_categories=(await Category.find()).length
+    // const totalOrders2= await Order.find().countDocuments()
+
+    return res.status(200).json({success:true, message:"total category count", total_categories})
+
+}
+
 exports.deletCategory = async(req,res)=>{
     try{
         const id = req.params.id 
@@ -135,6 +146,10 @@ exports.deletCategory = async(req,res)=>{
                 message:"Category Not Found", 
                 succes:false})
         }
+        // Find and delete all products associated with the deleted category
+        const deletedProducts = await Product.deleteMany({ category: id });
+        console.log(`${deletedProducts.deletedCount} products deleted`);
+
         return res.status(200).json({
             message:"Category deleted."})
 
@@ -143,7 +158,7 @@ exports.deletCategory = async(req,res)=>{
         console.log(error)
         // console.error(error)
         if(error instanceof mongoose.Error.CastError){
-            return res.status.json({
+            return res.status(400).json({
                 message:"Cast Error. Invalid ObjectId"})
         }
         return res.status(400).json({

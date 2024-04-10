@@ -168,24 +168,26 @@ exports.signin=async(req,res)=>{
 
         // respond with success msg
         return res.status(200).json({success:true, message:"Login Successfull", 
-   token,user:{
+   token,
+   user:{
     role:user.role,
     name:user.name,
     email:user.email
-   } })
+   } 
+})
     }
-    catch(err){
-        console.log(err)
-        if (err instanceof mongoose.Error.CastError){
+    catch(error){
+        console.log(error)
+        if (error instanceof mongoose.Error.CastError){
           res.status(400).json({
               error:"Cast Error.", 
               success:false, 
-              message:err.message})
+              message:error.message})
         }
         res.status(500).json({
           error:"Error on signin api.", 
           success:false, 
-          details:err})
+          details:error})
       }
 }
 

@@ -1,4 +1,5 @@
 const Product = require('../models/productModel')
+const Category = require('../models/categoryModel')
 const mongoose = require('mongoose')
 const path=require('path')
 // to add the product
@@ -27,21 +28,86 @@ exports.postProduct=async(req,res)=>{
 
 // to get the list of products
 exports.productList=async(req,res)=>{
-    const products = await Product.find().populate('category', 'category_name')
 
-    if(!products){
-        return res.status(404).json({
-            succes:false, 
-            message:"product not found"})
+    const page=parseInt(req.query.page || 1)
+    const itemsPerPage=parseInt(req.query.limit || 4) // items/page
+
+    if(page<=0 || itemsPerPage<=0){
+        return res.status(400).json({message:"Invalid page or limit parameters.", success:false})
     }
-    return res.status(200).json({
-        success:true,
-        message:"Product List",
-        products,
-        count:products.length
-    })
+
+    const searchQuery=req.query.search || '';
+
+    try{
+
+        const totalProductsCount=await Product.countDocuments({
+            $or:[
+                {product_name: {
+                    $regex:searchQuery, $options:'i' // case-insensitive
+                }
+                },
+                {product_description: {
+                    $regex:searchQuery, $options:'i' // case-insensitive
+                }
+                },
+
+            ]
+        })
+
+        const totalPages= Math.ceil( totalProductsCount/itemsPerPage)
+        const skip=(page-1)*itemsPerPage 
+        // 5-1=4 * 4 =16 
+        
+        const products = await Product.find(
+            {
+                $or:[
+                    {product_name: {
+                        $regex:searchQuery, $options:'i' // case-insensitive
+                    }
+                    },
+                    {product_description: {
+                        $regex:searchQuery, $options:'i' // case-insensitive
+                    }
+                    },
+    
+                ]
+            }
+        )
+        .populate('category', 'category_name')
+        .skip(skip)
+        .limit(itemsPerPage)
+        .exec()
+
+        if(!products){
+            return res.status(404).json({
+                succes:false, 
+                message:"product not found"})
+        }
+        return res.status(200).json({
+            success:true,
+            message:"Product List",
+            products,
+            count:products.length,
+            currentPage:page,
+            totalPages, 
+            totalItems:totalProductsCount
+        })
+
+    }
+    catch(error){
+        console.log(error)
+        if(error instanceof mongoose.Error.CastError){
+            return res.status(400).json({
+                message:"Cast Error. Invalid ObjectId"})
+        }
+        return res.status(400).json({
+            success:false, message:"Error on getting the product list api", 
+            details:error})
+    }
+
 
 }
+
 
 // to get product details of each product
 exports.productDetails=async(req,res)=>{
@@ -62,6 +128,8 @@ exports.updateProduct=async(req,res)=>{
             return res.status(400).json({success:false, message:"Invalid id"})
         }
 
+        console.log(req.body.category)
+       
         // define the update object based on valid req data
     const update = {
         product_name:req.body.product_name,
@@ -72,11 +140,17 @@ exports.updateProduct=async(req,res)=>{
         count_in_stock:req.body.count_in_stock
     }
     // if files are uploaded
-    if(req.files){
-        update.product_images= req.files.map(file=> {
-            const baseUrl = 'http://localhost:5000'; // Replace this with your server's base URL
-            return baseUrl + '/' + file.path.replace(/\\/g, '/'); // Convert Windows-style paths to URL paths
-        })
+    if (req.files && req.files.length > 0) {
+        // New images are uploaded, so update the product_images
+        update.product_images = req.files.map(file => file.path);
+    } 
+    else {
+        // No new images uploaded, retain the existing product_images
+        const existingProduct = await Product.findById(productId);
+        if (!existingProduct) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+        update.product_images = existingProduct.product_images;
     }
     // update product by id
     const updatedProduct = await Product.findByIdAndUpdate(productId, update, {
@@ -93,7 +167,7 @@ exports.updateProduct=async(req,res)=>{
     catch(error){
         console.log(error)
         if(error instanceof mongoose.Error.CastError){
-            return res.status.json({
+            return res.status(400).json({
                 message:"Cast Error. Invalid ObjectId"})
         }
         return res.status(400).json({
@@ -125,4 +199,68 @@ exports.deleteProduct=async(req,res)=>{
       res.status(500).json({error:"Error on deleting product api.", success:false, details:err})
     }
   }
-    
+   
+  
+exports.productCount=async(req,res)=>{
+    const total_products=(await Product.find()).length
+    // const totalOrders2= await Order.find().countDocuments()
+
+    return res.status(200).json({success:true, message:"total order count", total_products})
+
+}
+
+
+
+// exports.productList = async (req, res) => {
+//     const page = parseInt(req.query.page) || 1;
+//     const itemsPerPage = parseInt(req.query.limit) || 4;
+
+//     if (page <= 0 || itemsPerPage <= 0) {
+//         return res.status(400).json({ message: "Invalid page or limit parameters" });
+//     }
+
+//     const searchQuery = req.query.search || '';
+
+//     try {
+        // const totalProductsCount = await Product.countDocuments({
+        //    $or: [
+        //        { product_name: { $regex: searchQuery, $options: 'i' } },
+        //        { product_description: { $regex: searchQuery, $options: 'i' } },
+        //     ],
+        // });
+
+//         const totalPages = Math.ceil(totalProductsCount / itemsPerPage);
+//         const skip = (page - 1) * itemsPerPage;
+
+//         const products = await Product.find({
+//             $or: [
+//                 { product_name: { $regex: searchQuery, $options: 'i' } },
+//                 { product_description: { $regex: searchQuery, $options: 'i' } },
+//             ]
+//         })
+//         .populate('category', 'category_name')
+//         .skip(skip)
+//         .limit(itemsPerPage)
+//         .exec();
+
+//         if (!products || products.length === 0) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: "Products not found"
+//             });
+//         }
+
+//         return res.status(200).json({
+//             success: true,
+//             message: "Product List",
+//             products,
+//             count: products.length,
+//             currentPage: page,
+//             totalItems: totalProductsCount,
+//             totalPages
+//         });
+//     } catch (error) {
+//         console.error(error);
+//         return res.status(500).json({ message: "Internal Server Error" });
+//     }
+// };
