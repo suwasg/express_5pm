@@ -20,7 +20,7 @@ exports.postProduct=async(req,res)=>{
     })
     product = await product.save()
     if(!product){
-        return res.status(400).json("Failed to add product.")
+        return res.status(400).json({message: "Failed to add product.", success:false})
     }
     return res.status(201).json({message:"Product Added", success:true, product})
     // res.send(product)
@@ -210,57 +210,3 @@ exports.productCount=async(req,res)=>{
 }
 
 
-
-// exports.productList = async (req, res) => {
-//     const page = parseInt(req.query.page) || 1;
-//     const itemsPerPage = parseInt(req.query.limit) || 4;
-
-//     if (page <= 0 || itemsPerPage <= 0) {
-//         return res.status(400).json({ message: "Invalid page or limit parameters" });
-//     }
-
-//     const searchQuery = req.query.search || '';
-
-//     try {
-        // const totalProductsCount = await Product.countDocuments({
-        //    $or: [
-        //        { product_name: { $regex: searchQuery, $options: 'i' } },
-        //        { product_description: { $regex: searchQuery, $options: 'i' } },
-        //     ],
-        // });
-
-//         const totalPages = Math.ceil(totalProductsCount / itemsPerPage);
-//         const skip = (page - 1) * itemsPerPage;
-
-//         const products = await Product.find({
-//             $or: [
-//                 { product_name: { $regex: searchQuery, $options: 'i' } },
-//                 { product_description: { $regex: searchQuery, $options: 'i' } },
-//             ]
-//         })
-//         .populate('category', 'category_name')
-//         .skip(skip)
-//         .limit(itemsPerPage)
-//         .exec();
-
-//         if (!products || products.length === 0) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: "Products not found"
-//             });
-//         }
-
-//         return res.status(200).json({
-//             success: true,
-//             message: "Product List",
-//             products,
-//             count: products.length,
-//             currentPage: page,
-//             totalItems: totalProductsCount,
-//             totalPages
-//         });
-//     } catch (error) {
-//         console.error(error);
-//         return res.status(500).json({ message: "Internal Server Error" });
-//     }
-// };

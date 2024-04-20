@@ -162,7 +162,7 @@ exports.signin=async(req,res)=>{
         }
 
         // generate token
-        const token= jwt.sign({_id:user._id, role:user.role}, process.env.JWT_SECRET)
+        const token= jwt.sign( {_id:user._id, role:user.role} , process.env.JWT_SECRET)
 
         res.cookie('authToken')
 
@@ -170,6 +170,7 @@ exports.signin=async(req,res)=>{
         return res.status(200).json({success:true, message:"Login Successfull", 
    token,
    user:{
+    _id:user._id,
     role:user.role,
     name:user.name,
     email:user.email

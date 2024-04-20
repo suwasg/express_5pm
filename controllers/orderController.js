@@ -15,7 +15,7 @@ exports.postOrder=async(req,res)=>{
             return newOrderItem._id
             
         }));
-        console.log(orderItemIds)
+        console.log("order item ids: ", orderItemIds)
 
         // calculate the total amount
         const totalAmount = await Promise.all(orderItemIds.map(async orderId=>{
